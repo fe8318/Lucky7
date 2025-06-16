@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lucky 7</title>
+  <style>
+    body {
+      background: #222;
+      color: white;
+      font-family: "微軟正黑體", sans-serif;
+      margin: 0;
+      padding: 1em;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      height: 100vh;
+      align-items: flex-start;
+    }
+    #game-container {
+      display: flex;
+      gap: 20px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(7, 80px);
+      grid-template-rows: repeat(7, 80px);
+      gap: 2px;
+      user-select: none;
+    }
+    .cell {
+      width: 80px;
+      height: 80px;
+      background: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .cell img {
+      width: 70px;
+      height: 70px;
+      pointer-events: none;
+      user-select: none;
+    }
+    #info {
+      max-width: 280px;
+      line-height: 1.5em;
+      font-size: 1.1em;
+      user-select: none;
+    }
+    #status {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div>
+      <h1>Lucky 7</h1>
+      <div id="board"></div>
+      <div id="status">
+        輪到 <span id="turn" style="color:#66ccff">藍方</span>，下棋數字：<span id="nextNumber">1</span>
+      </div>
+    </div>
+    <div id="info">
+      <h2>遊戲規則</h2>
+      <p>1. 三方輪流下棋，每下一次棋都會使棋子的編號＋１。</p>
+      <p>2. 當編號7的棋子落子時，他周圍除了7以外的棋子都會變成同樣顏色的7。</p>
+      <p>3. 可以下棋在任何不是7的位置。</p>     
+      <p>4. 下在已有棋子的位置時，那個位置的數字會是原本數字和棋子編號的和，若超過7，則變成7。</p>
+      <p>5. 當所有位置都有棋子時，進行結算。</p>
+      <p>6. 結算時擁有最多7的人獲勝。</p>
+    </div>
+  </div>
+
+  <script>
+    const boardSize = 7;
+    const board = [];
+    const boardElement = document.getElementById('board');
+    const turnDisplay = document.getElementById('turn');
+    const nextNumberDisplay = document.getElementById('nextNumber');
+
+    const players = ['blue', 'red', 'green'];
+    let currentPlayerIndex = 0;
+    let currentPlayer = players[currentPlayerIndex];
+    let currentNumber = 1;
+
+    // 初始化棋盤
+    for (let y = 0; y < boardSize; y++) {
+      board[y] = [];
+      for (let x = 0; x < boardSize; x++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        boardElement.appendChild(cell);
+        board[y][x] = { element: cell, owner: null, value: 0 };
+        cell.addEventListener('click', () => handleMove(x, y));
+      }
+    }
+
+    function handleMove(x, y) {
+      const cell = board[y][x];
+
+      if (cell.value === 7) return;
+
+      if (cell.value === 0) {
+        cell.value = currentNumber;
+      } else {
+        cell.value = Math.min(cell.value + currentNumber, 7);
+      }
+      cell.owner = currentPlayer;
+      updateCellDisplay(cell);
+
+      if (cell.value === 7) {
+        spreadSeven(x, y, currentPlayer);
+      }
+
+      if (isBoardFull()) {
+        checkWinner();
+        return;
+      }
+
+      currentNumber = currentNumber === 7 ? 1 : currentNumber + 1;
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      currentPlayer = players[currentPlayerIndex];
+
+      turnDisplay.textContent = currentPlayer === 'blue' ? '藍方' :
+                                currentPlayer === 'red' ? '紅方' : '綠方';
+      turnDisplay.style.color = currentPlayer === 'blue' ? '#66ccff' :
+                                currentPlayer === 'red' ? '#ff6666' : '#66ff66';
+      nextNumberDisplay.textContent = currentNumber;
+    }
+
+    function spreadSeven(x, y, color) {
+      const dx = [-1, 0, 1, 0, -1, -1, 1, 1];
+      const dy = [0, -1, 0, 1, -1, 1, -1, 1];
+      for (let i = 0; i < dx.length; i++) {
+        const nx = x + dx[i];
+        const ny = y + dy[i];
+        if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
+          const neighbor = board[ny][nx];
+          if (neighbor.value < 7) {
+            neighbor.owner = color;
+            neighbor.value = 7;
+            updateCellDisplay(neighbor);
+          }
+        }
+      }
+    }
+
+    function updateCellDisplay(cell) {
+      cell.element.innerHTML = '';
+      if (cell.value > 0 && cell.owner) {
+        const colorPrefix = cell.owner === 'blue' ? 'B' :
+                            cell.owner === 'red' ? 'R' : 'G';
+        const img = document.createElement('img');
+        img.src = `${colorPrefix}${cell.value}.png`;
+        img.alt = cell.value.toString();
+        cell.element.appendChild(img);
+      }
+    }
+
+    function isBoardFull() {
+      return board.flat().every(cell => cell.value > 0);
+    }
+
+    function checkWinner() {
+      let redCount = 0, blueCount = 0, greenCount = 0;
+      board.flat().forEach(cell => {
+        if (cell.value === 7) {
+          if (cell.owner === 'red') redCount++;
+          else if (cell.owner === 'blue') blueCount++;
+          else if (cell.owner === 'green') greenCount++;
+        }
+      });
+
+      let result;
+      if (redCount > blueCount && redCount > greenCount) result = '紅方獲勝！';
+      else if (blueCount > redCount && blueCount > greenCount) result = '藍方獲勝！';
+      else if (greenCount > redCount && greenCount > blueCount) result = '綠方獲勝！';
+      else result = '平手！';
+
+      document.getElementById('status').innerHTML =
+        `<strong>遊戲結束</strong>：${result}（紅方7數量: ${redCount}, 藍方7數量: ${blueCount}, 綠方7數量: ${greenCount}）`;
+    }
+  </script>
+</body>
+</html>
