@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>四個導向區塊</title>
+  <style>
+    body {
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      height: 100vh;
+    }
+    .block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      font-family: "微軟正黑體", sans-serif;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .block1 { background-color: #3498db; }
+    .block2 { background-color: #e74c3c; }
+    .block3 { background-color: #2ecc71; }
+    .block4 { background-color: #f1c40f; }
+
+    .block:hover {
+      filter: brightness(1.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="block block1" onclick="location.href='/LK7.html'">本地雙人模式</div>
+  <div class="block block2" onclick="location.href='/LK7_AI.html'">電腦對戰</div>
+  <div class="block block3" onclick="location.href='/LK7_3P.html'">本地三人模式</div>
+  <div class="block block4" onclick="location.href='/LK7_3P_AI.html'">三人電腦對戰</div>
+</body>
+</html>
